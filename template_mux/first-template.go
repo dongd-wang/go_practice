@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 	"text/template"
+
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -26,12 +28,10 @@ func renderTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fileServer := http.FileServer(http.Dir("template/static"))
-	codeServer := http.FileServer(http.Dir("./"))
-	http.Handle("/static/", http.StripPrefix("/static/", fileServer))
-	http.Handle("/code/", http.StripPrefix("/code/", codeServer))
-	http.HandleFunc("/", renderTemplate)
-	err := http.ListenAndServe(CONN_HOST+":"+CONN_PORT, nil)
+	router := mux.NewRouter()
+	router.HandleFunc("/", renderTemplate).Methods("GET")
+	router.PathPrefix("/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("template/static"))))
+	err := http.ListenAndServe(CONN_HOST+":"+CONN_PORT, router)
 	if err != nil {
 		log.Fatal("error starting http server: ", err)
 	}
